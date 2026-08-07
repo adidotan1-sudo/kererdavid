@@ -10,7 +10,7 @@ import { TabBar } from "@/components/TabBar";
 import { PunchDots } from "@/components/PunchDots";
 import { Panel, SectionLabel } from "@/components/Panel";
 import { StatusPill } from "@/components/StatusPill";
-import { TextField, TextAreaField, SubmitButton } from "@/components/Fields";
+import { TextField, TextAreaField, SubmitButton, CompactSubmitButton } from "@/components/Fields";
 
 export default async function MyStatusPage({
   searchParams,
@@ -86,21 +86,7 @@ export default async function MyStatusPage({
             </div>
           ) : (
             <form action={requestCard}>
-              <button
-                type="submit"
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  background: "var(--accent)",
-                  color: "var(--accent-ink)",
-                  borderRadius: 12,
-                  padding: 12,
-                  font: "700 13.5px var(--sans)",
-                  cursor: "pointer",
-                }}
-              >
-                {renewalActionLabel}
-              </button>
+              <CompactSubmitButton>{renewalActionLabel}</CompactSubmitButton>
             </form>
           )}
         </Panel>

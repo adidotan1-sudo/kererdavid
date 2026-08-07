@@ -1,3 +1,7 @@
+"use client";
+
+import { useFormStatus } from "react-dom";
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   background: "var(--input-bg)",
@@ -74,22 +78,46 @@ export function TextAreaField({
 }
 
 export function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
+  const { pending } = useFormStatus();
+  const isDisabled = disabled || pending;
   return (
     <button
       type="submit"
-      disabled={disabled}
+      disabled={isDisabled}
       style={{
         width: "100%",
         textAlign: "center",
         borderRadius: 14,
         padding: 15,
         font: "700 15px var(--sans)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        background: disabled ? "oklch(0.3 0.03 260)" : "var(--accent)",
-        color: disabled ? "var(--text-55)" : "var(--accent-ink)",
+        cursor: isDisabled ? "not-allowed" : "pointer",
+        background: isDisabled ? "oklch(0.3 0.03 260)" : "var(--accent)",
+        color: isDisabled ? "var(--text-55)" : "var(--accent-ink)",
       }}
     >
-      {children}
+      {pending ? "שולח..." : children}
+    </button>
+  );
+}
+
+export function CompactSubmitButton({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{
+        width: "100%",
+        textAlign: "center",
+        background: pending ? "oklch(0.3 0.03 260)" : "var(--accent)",
+        color: pending ? "var(--text-55)" : "var(--accent-ink)",
+        borderRadius: 12,
+        padding: 12,
+        font: "700 13.5px var(--sans)",
+        cursor: pending ? "not-allowed" : "pointer",
+      }}
+    >
+      {pending ? "שולח..." : children}
     </button>
   );
 }
