@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  createdAt DateTime @default(now())
+
+  card         PunchCard?
+  appointments Appointment[]
+  history      HistoryEntry[]
+  sessions     Session[]
+}
+
+model PunchCard {
+  id               String  @id @default(cuid())
+  clientId         String  @unique
+  client           Client  @relation(fields: [clientId], references: [id])
+  total            Int     @default(10)
+  used             Int     @default(0)
+  renewalRequested Boolean @default(false)
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  serviceId     String?
+  serviceTitle  String
+  phone         String
+  notes         String
+  requestedDate String?
+  status        String   @default("new") // new | scheduled | done
+  kind          String // booking | card_new | card_renewal
+  createdAt     DateTime @default(now())
+}
+
+model HistoryEntry {
+  id       String   @id @default(cuid())
+  clientId String
+  client   Client   @relation(fields: [clientId], references: [id])
+  service  String
+  date     DateTime
+}
+
+model ProviderAuth {
+  id      Int    @id @default(1)
+  pinHash String
+  pinSalt String
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  clientId   String?
+  client     Client?  @relation(fields: [clientId], references: [id])
+  isProvider Boolean  @default(false)
+  expiresAt  DateTime
+}
