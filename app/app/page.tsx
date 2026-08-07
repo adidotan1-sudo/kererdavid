@@ -14,7 +14,7 @@ export default async function HomePage() {
         <div style={{ position: "relative", padding: "32px 20px 22px", textAlign: "center" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/keter-david-logo.png"
+            src="/IMG_0867.png"
             alt="כתר דוד"
             style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", marginBottom: 12 }}
           />

@@ -14,7 +14,7 @@ export default async function RegisterPage() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/keter-david-logo.png"
+            src="/IMG_0867.png"
             alt="כתר דוד"
             style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "cover", marginBottom: 20 }}
           />
