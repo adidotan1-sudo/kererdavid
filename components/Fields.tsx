@@ -4,6 +4,7 @@ import { useFormStatus } from "react-dom";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
+  minWidth: 0,
   background: "var(--input-bg)",
   border: "1px solid var(--input-border)",
   borderRadius: 12,
@@ -143,6 +144,30 @@ export function CompactSubmitButton({ children }: { children: React.ReactNode })
       }}
     >
       {pending ? "שולח..." : children}
+    </button>
+  );
+}
+
+export function DangerSubmitButton({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{
+        width: "100%",
+        textAlign: "center",
+        background: "transparent",
+        color: pending ? "var(--text-55)" : "oklch(0.7 0.16 25)",
+        border: `1px solid ${pending ? "var(--input-border)" : "oklch(0.4 0.12 25)"}`,
+        borderRadius: 12,
+        padding: 11,
+        font: "700 13px var(--sans)",
+        cursor: pending ? "not-allowed" : "pointer",
+        marginTop: 8,
+      }}
+    >
+      {pending ? "מבטל..." : children}
     </button>
   );
 }

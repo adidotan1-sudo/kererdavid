@@ -1,10 +1,11 @@
-type Variant = "neutral" | "active" | "selected" | "unselected";
+type Variant = "neutral" | "active" | "selected" | "unselected" | "danger";
 
 const VARIANT_STYLE: Record<Variant, React.CSSProperties> = {
   neutral: { background: "var(--panel-border)", color: "var(--accent)" },
   active: { background: "var(--green-bg)", color: "var(--green-text)" },
   selected: { background: "var(--accent)", color: "var(--accent-ink)", border: "1px solid var(--accent)" },
   unselected: { background: "var(--input-bg)", color: "var(--text-85)", border: "1px solid var(--input-border)" },
+  danger: { background: "oklch(0.3 0.1 25)", color: "oklch(0.8 0.14 25)" },
 };
 
 export function StatusPill({

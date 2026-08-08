@@ -60,4 +60,5 @@ export const statusMeta: Record<string, { label: string }> = {
   new: { label: "חדש" },
   scheduled: { label: "מתוזמן" },
   done: { label: "הושלם" },
+  cancelled: { label: "בוטל" },
 };

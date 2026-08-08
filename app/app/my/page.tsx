@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getCurrentClient } from "@/lib/session";
-import { updateMyDetails, requestCard, requestCardTreatment, editAppointment } from "@/lib/actions/client";
-import { statusMeta, services } from "@/lib/services";
+import { updateMyDetails, requestCard, requestCardTreatment, editAppointment, cancelAppointment } from "@/lib/actions/client";
+import { statusMeta } from "@/lib/services";
 import { formatHeDate, formatRelative } from "@/lib/format";
 import { BackLink } from "@/components/BackLink";
 import { ScreenBody } from "@/components/Screen";
@@ -10,7 +10,7 @@ import { TabBar } from "@/components/TabBar";
 import { PunchDots } from "@/components/PunchDots";
 import { Panel, SectionLabel } from "@/components/Panel";
 import { StatusPill } from "@/components/StatusPill";
-import { TextField, TextAreaField, SelectField, SubmitButton, CompactSubmitButton } from "@/components/Fields";
+import { TextField, TextAreaField, SubmitButton, CompactSubmitButton, DangerSubmitButton } from "@/components/Fields";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function MyStatusPage({
     orderBy: { createdAt: "desc" },
   });
   const pending = appointments.filter((a) => a.status === "new");
-  const upcoming = appointments.filter((a) => a.status === "scheduled" && a.kind === "booking");
+  const upcoming = appointments.filter((a) => a.status === "scheduled");
   const history = await db.historyEntry.findMany({
     where: { clientId: client.id },
     orderBy: { date: "desc" },
@@ -95,13 +95,6 @@ export default async function MyStatusPage({
             </div>
           ) : isActive ? (
             <form action={requestCardTreatment}>
-              <SelectField
-                label="איזה טיפול תרצי לבקש?"
-                name="serviceId"
-                options={services.map((s) => ({ value: s.id, label: s.title }))}
-              />
-              <TextField label="תאריך הטיפול" name="date" type="date" required />
-              <TextAreaField label="הערות (לא חובה)" name="notes" rows={2} />
               <CompactSubmitButton>בקשת טיפול על הכרטיסייה</CompactSubmitButton>
             </form>
           ) : (
@@ -164,6 +157,10 @@ export default async function MyStatusPage({
                         <TextAreaField label="תיאור הבעיה" name="notes" defaultValue={r.notes} rows={3} />
                         <SubmitButton>שמירת שינויים</SubmitButton>
                       </form>
+                      <form action={cancelAppointment}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <DangerSubmitButton>ביטול הטיפול</DangerSubmitButton>
+                      </form>
                     </div>
                   )}
                 </Panel>
@@ -184,6 +181,7 @@ export default async function MyStatusPage({
                     {formatHeDate(apt.requestedDate)}
                   </div>
                 </div>
+                <StatusPill label={statusMeta[apt.status]?.label ?? apt.status} variant="active" />
                 <Link
                   href={isEditing ? "/app/my" : `/app/my?editApt=${apt.id}`}
                   style={{ flex: "none", font: "600 12px var(--sans)", color: "var(--accent)" }}
@@ -198,6 +196,10 @@ export default async function MyStatusPage({
                     <TextField label="תאריך" name="date" type="date" defaultValue={apt.requestedDate ?? ""} />
                     <TextAreaField label="תיאור הבעיה" name="notes" defaultValue={apt.notes} rows={3} />
                     <SubmitButton>שמירת שינויים</SubmitButton>
+                  </form>
+                  <form action={cancelAppointment}>
+                    <input type="hidden" name="id" value={apt.id} />
+                    <DangerSubmitButton>ביטול הטיפול</DangerSubmitButton>
                   </form>
                 </div>
               )}

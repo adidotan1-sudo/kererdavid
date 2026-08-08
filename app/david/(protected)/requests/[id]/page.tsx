@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { statusMeta } from "@/lib/services";
 import { formatHeDate } from "@/lib/format";
@@ -34,8 +35,14 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
   return (
     <ScreenBody padding="60px 20px 24px">
       <BackLink href="/david" />
-      <div style={{ font: "700 20px var(--serif)", color: "var(--text-strong)", marginBottom: 4 }}>
-        {request.client.name}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+        <div style={{ font: "700 20px var(--serif)", color: "var(--text-strong)" }}>{request.client.name}</div>
+        <Link
+          href={`/david/clients/${request.clientId}`}
+          style={{ font: "600 12px var(--sans)", color: "var(--accent)" }}
+        >
+          כל הפעילות של הלקוח
+        </Link>
       </div>
       <div
         style={{
@@ -93,38 +100,44 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <div style={{ font: "600 12.5px var(--sans)", color: "var(--text-70)", marginBottom: 10 }}>סטטוס הפנייה</div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        {statusChoices.map((st) => (
-          <form key={st} action={setRequestStatus}>
-            <input type="hidden" name="id" value={request.id} />
-            <input type="hidden" name="status" value={st} />
-            <StatusPill
-              label={statusMeta[st].label}
-              variant={request.status === st ? "selected" : "unselected"}
-              submit
-            />
-          </form>
-        ))}
-        {isCardKind &&
-          (request.status === "done" ? (
-            <StatusPill label="✓ נוקב" variant="active" />
-          ) : (
-            <form action={punchRequest}>
-              <input type="hidden" name="id" value={request.id} />
-              <StatusPill label="נוקב" variant="active" submit />
-            </form>
-          ))}
-      </div>
+      {request.status === "cancelled" ? (
+        <StatusPill label="בוטל על ידי הלקוח" variant="danger" />
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {statusChoices.map((st) => (
+              <form key={st} action={setRequestStatus}>
+                <input type="hidden" name="id" value={request.id} />
+                <input type="hidden" name="status" value={st} />
+                <StatusPill
+                  label={statusMeta[st].label}
+                  variant={request.status === st ? "selected" : "unselected"}
+                  submit
+                />
+              </form>
+            ))}
+            {isCardKind &&
+              (request.status === "done" ? (
+                <StatusPill label="✓ נוקב" variant="active" />
+              ) : (
+                <form action={punchRequest}>
+                  <input type="hidden" name="id" value={request.id} />
+                  <StatusPill label="נוקב" variant="active" submit />
+                </form>
+              ))}
+          </div>
 
-      {isCardKind && card && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ font: "12px var(--sans)", color: "var(--text-65)", marginBottom: 4 }}>
-            {request.status === "done" ? "הכרטיסייה עודכנה" : CARD_NOTE[request.kind]}
-          </div>
-          <div style={{ font: "600 13px var(--sans)", color: "var(--accent)" }}>
-            {card.used} מתוך {card.total} ניקובים
-          </div>
-        </div>
+          {isCardKind && card && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ font: "12px var(--sans)", color: "var(--text-65)", marginBottom: 4 }}>
+                {request.status === "done" ? "הכרטיסייה עודכנה" : CARD_NOTE[request.kind]}
+              </div>
+              <div style={{ font: "600 13px var(--sans)", color: "var(--accent)" }}>
+                {card.used} מתוך {card.total} ניקובים
+              </div>
+            </div>
+          )}
+        </>
       )}
     </ScreenBody>
   );

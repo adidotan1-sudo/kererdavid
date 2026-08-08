@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { formatHeDate } from "@/lib/format";
+import { statusMeta } from "@/lib/services";
+import { formatHeDate, formatRelative } from "@/lib/format";
 import { adjustCardUsed } from "@/lib/actions/provider";
 import { BackLink } from "@/components/BackLink";
 import { ScreenBody } from "@/components/Screen";
 import { Panel, SectionLabel } from "@/components/Panel";
 import { PunchDots } from "@/components/PunchDots";
+
+const GROUP_ORDER = ["new", "scheduled", "done", "cancelled"];
 
 const PHONE_ICON = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -27,7 +30,11 @@ export default async function ClientDetailPage({
   const { editCard } = await searchParams;
   const client = await db.client.findUnique({
     where: { id },
-    include: { card: true, history: { orderBy: { date: "desc" } } },
+    include: {
+      card: true,
+      history: { orderBy: { date: "desc" } },
+      appointments: { orderBy: { createdAt: "desc" } },
+    },
   });
   if (!client || !client.card) redirect("/david/cards");
   const card = client.card;
@@ -37,6 +44,12 @@ export default async function ClientDetailPage({
   const byService = new Map<string, number>();
   for (const h of client.history) byService.set(h.service, (byService.get(h.service) ?? 0) + 1);
   const summary = Array.from(byService.entries());
+
+  const requestGroups = GROUP_ORDER.map((status) => ({
+    status,
+    label: statusMeta[status]?.label ?? status,
+    items: client.appointments.filter((a) => a.status === status),
+  })).filter((g) => g.items.length > 0);
 
   return (
     <ScreenBody padding="60px 20px 24px">
@@ -139,6 +152,43 @@ export default async function ClientDetailPage({
           </div>
         )}
       </Panel>
+
+      <SectionLabel>בקשות</SectionLabel>
+      {requestGroups.length === 0 && (
+        <div style={{ font: "13px var(--sans)", color: "var(--text-60)", marginBottom: 22 }}>אין בקשות עדיין</div>
+      )}
+      {requestGroups.map((grp) => (
+        <div key={grp.status} style={{ marginBottom: 14 }}>
+          <div style={{ font: "600 11.5px var(--sans)", color: "var(--text-65)", margin: "0 2px 6px" }}>
+            {grp.label}
+          </div>
+          {grp.items.map((req) => (
+            <Link
+              key={req.id}
+              href={`/david/requests/${req.id}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: "var(--panel)",
+                border: "1px solid var(--panel-border)",
+                borderRadius: 12,
+                padding: "11px 13px",
+                marginBottom: 8,
+                color: "inherit",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ font: "600 13.5px var(--sans)", color: "var(--text)" }}>{req.serviceTitle}</div>
+                <div style={{ font: "11.5px var(--sans)", color: "var(--text-65)", marginTop: 2 }}>
+                  {formatRelative(req.createdAt)}
+                </div>
+              </div>
+              <div style={{ flex: "none", font: "16px var(--sans)", color: "var(--text-55)" }}>‹</div>
+            </Link>
+          ))}
+        </div>
+      ))}
 
       <div style={{ font: "600 13px var(--sans)", color: "var(--accent)", marginBottom: 10 }}>סיכום טיפולים</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>

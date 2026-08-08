@@ -6,7 +6,7 @@ import { ScreenBody } from "@/components/Screen";
 import { TabBar } from "@/components/TabBar";
 import { SearchBox } from "@/components/SearchBox";
 
-const GROUP_ORDER = ["new", "scheduled", "done"];
+const GROUP_ORDER = ["new", "scheduled", "done", "cancelled"];
 
 export default async function InboxPage({
   searchParams,

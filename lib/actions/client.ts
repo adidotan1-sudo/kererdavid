@@ -83,29 +83,38 @@ export async function requestCard(_formData: FormData) {
   redirect("/app/my");
 }
 
-export async function requestCardTreatment(formData: FormData) {
+export async function requestCardTreatment(_formData: FormData) {
   const client = await requireClient();
-  const serviceId = String(formData.get("serviceId") || "");
-  const service = findService(serviceId);
-  const date = String(formData.get("date") || "");
-  const notes = String(formData.get("notes") || "").trim() || "—";
-  if (!date) redirect("/app/my");
-
   const card = await db.punchCard.findUnique({ where: { clientId: client.id } });
   if (!card || card.used <= 0 || card.used >= card.total) redirect("/app/my");
 
   await db.appointment.create({
     data: {
       clientId: client.id,
-      serviceId: service?.id,
-      serviceTitle: service?.title || "",
+      serviceTitle: "בקשת טיפול על הכרטיסייה",
       phone: client.phone,
-      notes,
-      requestedDate: date || null,
+      notes: "בקשה לטיפול נוסף במסגרת הכרטיסייה הפעילה.",
       status: "new",
       kind: "card_treatment",
     },
   });
+  redirect("/app/my");
+}
+
+export async function cancelAppointment(formData: FormData) {
+  const client = await requireClient();
+  const id = String(formData.get("id") || "");
+
+  const appt = await db.appointment.findUnique({ where: { id } });
+  if (!appt || appt.clientId !== client.id) redirect("/app/my");
+  if (appt.status === "done" || appt.status === "cancelled") redirect("/app/my");
+
+  await db.appointment.update({ where: { id }, data: { status: "cancelled" } });
+
+  if (appt.kind === "card_new" || appt.kind === "card_renewal") {
+    await db.punchCard.update({ where: { clientId: client.id }, data: { renewalRequested: false } });
+  }
+
   redirect("/app/my");
 }
 
