@@ -83,6 +83,31 @@ export async function requestCard(_formData: FormData) {
   redirect("/app/my");
 }
 
+export async function requestCardTreatment(formData: FormData) {
+  const client = await requireClient();
+  const serviceId = String(formData.get("serviceId") || "");
+  const service = findService(serviceId);
+  const date = String(formData.get("date") || "");
+  const notes = String(formData.get("notes") || "").trim() || "—";
+
+  const card = await db.punchCard.findUnique({ where: { clientId: client.id } });
+  if (!card || card.used <= 0 || card.used >= card.total) redirect("/app/my");
+
+  await db.appointment.create({
+    data: {
+      clientId: client.id,
+      serviceId: service?.id,
+      serviceTitle: service?.title || "",
+      phone: client.phone,
+      notes,
+      requestedDate: date || null,
+      status: "new",
+      kind: "card_treatment",
+    },
+  });
+  redirect("/app/my");
+}
+
 export async function editAppointment(formData: FormData) {
   const client = await requireClient();
   const id = String(formData.get("id") || "");

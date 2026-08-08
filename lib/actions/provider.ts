@@ -22,23 +22,55 @@ export async function setRequestStatus(formData: FormData) {
 
   const appt = await db.appointment.update({ where: { id }, data: { status } });
 
-  if (status === "done") {
-    if (appt.kind === "booking" && appt.serviceTitle) {
-      await db.historyEntry.create({
-        data: {
-          clientId: appt.clientId,
-          service: appt.serviceTitle,
-          date: appt.requestedDate ? new Date(appt.requestedDate) : new Date(),
-        },
-      });
-    }
+  if (status === "done" && appt.kind === "booking" && appt.serviceTitle) {
+    await db.historyEntry.create({
+      data: {
+        clientId: appt.clientId,
+        service: appt.serviceTitle,
+        date: appt.requestedDate ? new Date(appt.requestedDate) : new Date(),
+      },
+    });
+  }
+  redirect(`/david/requests/${id}`);
+}
+
+// Punches the client's card and closes out a card-linked request (card_new,
+// card_renewal, card_treatment) in one action, so the punch always happens
+// together with completion instead of relying on David to remember a
+// separate manual adjustment on the client's card screen.
+export async function punchRequest(formData: FormData) {
+  await requireProvider();
+  const id = String(formData.get("id") || "");
+  const appt = await db.appointment.findUnique({ where: { id } });
+  if (!appt) redirect("/david");
+
+  await db.appointment.update({ where: { id }, data: { status: "done" } });
+
+  const card = await db.punchCard.findUnique({ where: { clientId: appt.clientId } });
+  if (card) {
     if (appt.kind === "card_new" || appt.kind === "card_renewal") {
       await db.punchCard.update({
         where: { clientId: appt.clientId },
-        data: { renewalRequested: false },
+        data: { used: 1, renewalRequested: false },
+      });
+    } else if (appt.kind === "card_treatment") {
+      await db.punchCard.update({
+        where: { clientId: appt.clientId },
+        data: { used: Math.min(card.total, card.used + 1) },
       });
     }
   }
+
+  if (appt.kind === "card_treatment" && appt.serviceTitle) {
+    await db.historyEntry.create({
+      data: {
+        clientId: appt.clientId,
+        service: appt.serviceTitle,
+        date: appt.requestedDate ? new Date(appt.requestedDate) : new Date(),
+      },
+    });
+  }
+
   redirect(`/david/requests/${id}`);
 }
 

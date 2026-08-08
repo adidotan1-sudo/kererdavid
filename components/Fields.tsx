@@ -77,6 +77,31 @@ export function TextAreaField({
   );
 }
 
+export function SelectField({
+  label,
+  name,
+  options,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+  defaultValue?: string;
+}) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      <select name={name} defaultValue={defaultValue} style={inputStyle}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
   const { pending } = useFormStatus();
   const isDisabled = disabled || pending;

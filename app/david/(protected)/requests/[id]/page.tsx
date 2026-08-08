@@ -2,10 +2,18 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { statusMeta } from "@/lib/services";
 import { formatHeDate } from "@/lib/format";
-import { setRequestStatus } from "@/lib/actions/provider";
+import { setRequestStatus, punchRequest } from "@/lib/actions/provider";
 import { BackLink } from "@/components/BackLink";
 import { ScreenBody } from "@/components/Screen";
 import { StatusPill } from "@/components/StatusPill";
+import { CompactSubmitButton } from "@/components/Fields";
+
+const CARD_KINDS = ["card_new", "card_renewal", "card_treatment"];
+const CARD_NOTE: Record<string, string> = {
+  card_new: "בקשה לכרטיסייה חדשה — לחיצה על \"נוקב\" תפתח את הכרטיסייה עם הניקוב הראשון",
+  card_renewal: "בקשת חידוש כרטיסייה — לחיצה על \"נוקב\" תפתח מחזור ניקוב חדש",
+  card_treatment: "טיפול מתוך כרטיסייה פעילה — לחיצה על \"נוקב\" תוסיף ניקוב לכרטיסייה",
+};
 
 const PHONE_ICON = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -17,6 +25,9 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const request = await db.appointment.findUnique({ where: { id }, include: { client: true } });
   if (!request) redirect("/david");
+
+  const isCardKind = CARD_KINDS.includes(request.kind);
+  const statusChoices = isCardKind ? (["new", "scheduled"] as const) : (["new", "scheduled", "done"] as const);
 
   return (
     <ScreenBody padding="60px 20px 24px">
@@ -81,7 +92,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
       <div style={{ font: "600 12.5px var(--sans)", color: "var(--text-70)", marginBottom: 10 }}>סטטוס הפנייה</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {(["new", "scheduled", "done"] as const).map((st) => (
+        {statusChoices.map((st) => (
           <form key={st} action={setRequestStatus}>
             <input type="hidden" name="id" value={request.id} />
             <input type="hidden" name="status" value={st} />
@@ -93,6 +104,35 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           </form>
         ))}
       </div>
+
+      {isCardKind && (
+        <div style={{ marginTop: 20 }}>
+          {request.status === "done" ? (
+            <div
+              style={{
+                textAlign: "center",
+                background: "var(--panel-border)",
+                color: "var(--text-75)",
+                borderRadius: 12,
+                padding: 12,
+                font: "600 13px var(--sans)",
+              }}
+            >
+              ✓ נוקב — הכרטיסייה עודכנה
+            </div>
+          ) : (
+            <>
+              <div style={{ font: "12px var(--sans)", color: "var(--text-65)", marginBottom: 10 }}>
+                {CARD_NOTE[request.kind]}
+              </div>
+              <form action={punchRequest}>
+                <input type="hidden" name="id" value={request.id} />
+                <CompactSubmitButton>נוקב</CompactSubmitButton>
+              </form>
+            </>
+          )}
+        </div>
+      )}
     </ScreenBody>
   );
 }
