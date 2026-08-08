@@ -12,6 +12,8 @@ import { Panel, SectionLabel } from "@/components/Panel";
 import { StatusPill } from "@/components/StatusPill";
 import { TextField, TextAreaField, SelectField, SubmitButton, CompactSubmitButton } from "@/components/Fields";
 
+export const dynamic = "force-dynamic";
+
 export default async function MyStatusPage({
   searchParams,
 }: {
@@ -31,7 +33,7 @@ export default async function MyStatusPage({
   const history = await db.historyEntry.findMany({
     where: { clientId: client.id },
     orderBy: { date: "desc" },
-    take: 5,
+    take: 10,
   });
 
   const isEmpty = card.used === 0;
@@ -98,7 +100,7 @@ export default async function MyStatusPage({
                 name="serviceId"
                 options={services.map((s) => ({ value: s.id, label: s.title }))}
               />
-              <TextField label="תאריך רצוי" name="date" type="date" />
+              <TextField label="תאריך הטיפול" name="date" type="date" required />
               <TextAreaField label="הערות (לא חובה)" name="notes" rows={2} />
               <CompactSubmitButton>בקשת טיפול על הכרטיסייה</CompactSubmitButton>
             </form>
@@ -106,6 +108,29 @@ export default async function MyStatusPage({
             <form action={requestCard}>
               <CompactSubmitButton>{renewalActionLabel}</CompactSubmitButton>
             </form>
+          )}
+
+          {history.length > 0 && (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--panel-border)" }}>
+              <div style={{ font: "600 12px var(--sans)", color: "var(--text-65)", marginBottom: 8 }}>
+                תאריכי ניקוב
+              </div>
+              {history.map((h, i) => (
+                <div
+                  key={h.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 0",
+                    borderTop: i === 0 ? "none" : "1px solid var(--panel-border)",
+                  }}
+                >
+                  <div style={{ font: "13px var(--sans)", color: "var(--text-90)" }}>{h.service}</div>
+                  <div style={{ font: "12px var(--sans)", color: "var(--text-60)" }}>{formatHeDate(h.date)}</div>
+                </div>
+              ))}
+            </div>
           )}
         </Panel>
 
@@ -183,29 +208,6 @@ export default async function MyStatusPage({
           <div style={{ font: "13px var(--sans)", color: "var(--text-60)", textAlign: "center", padding: "16px 0" }}>
             אין טיפולים קרובים כרגע
           </div>
-        )}
-
-        {history.length > 0 && (
-          <>
-            <SectionLabel>טיפולים שהושלמו</SectionLabel>
-            <Panel style={{ padding: "4px 16px", marginBottom: 22 }}>
-              {history.map((h, i) => (
-                <div
-                  key={h.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "11px 0",
-                    borderTop: i === 0 ? "none" : "1px solid var(--panel-border)",
-                  }}
-                >
-                  <div style={{ font: "13.5px var(--sans)", color: "var(--text-90)" }}>{h.service}</div>
-                  <div style={{ font: "12px var(--sans)", color: "var(--text-60)" }}>{formatHeDate(h.date)}</div>
-                </div>
-              ))}
-            </Panel>
-          </>
         )}
       </ScreenBody>
       <TabBar

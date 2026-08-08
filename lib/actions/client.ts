@@ -89,6 +89,7 @@ export async function requestCardTreatment(formData: FormData) {
   const service = findService(serviceId);
   const date = String(formData.get("date") || "");
   const notes = String(formData.get("notes") || "").trim() || "—";
+  if (!date) redirect("/app/my");
 
   const card = await db.punchCard.findUnique({ where: { clientId: client.id } });
   if (!card || card.used <= 0 || card.used >= card.total) redirect("/app/my");

@@ -14,6 +14,8 @@ const PHONE_ICON = (
   </svg>
 );
 
+export const dynamic = "force-dynamic";
+
 export default async function ClientDetailPage({
   params,
   searchParams,

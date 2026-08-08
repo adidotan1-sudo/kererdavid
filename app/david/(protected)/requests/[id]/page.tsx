@@ -6,7 +6,6 @@ import { setRequestStatus, punchRequest } from "@/lib/actions/provider";
 import { BackLink } from "@/components/BackLink";
 import { ScreenBody } from "@/components/Screen";
 import { StatusPill } from "@/components/StatusPill";
-import { CompactSubmitButton } from "@/components/Fields";
 
 const CARD_KINDS = ["card_new", "card_renewal", "card_treatment"];
 const CARD_NOTE: Record<string, string> = {
@@ -21,6 +20,8 @@ const PHONE_ICON = (
   </svg>
 );
 
+export const dynamic = "force-dynamic";
+
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const request = await db.appointment.findUnique({ where: { id }, include: { client: true } });
@@ -28,6 +29,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
   const isCardKind = CARD_KINDS.includes(request.kind);
   const statusChoices = isCardKind ? (["new", "scheduled"] as const) : (["new", "scheduled", "done"] as const);
+  const card = isCardKind ? await db.punchCard.findUnique({ where: { clientId: request.clientId } }) : null;
 
   return (
     <ScreenBody padding="60px 20px 24px">
@@ -91,7 +93,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <div style={{ font: "600 12.5px var(--sans)", color: "var(--text-70)", marginBottom: 10 }}>סטטוס הפנייה</div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {statusChoices.map((st) => (
           <form key={st} action={setRequestStatus}>
             <input type="hidden" name="id" value={request.id} />
@@ -103,34 +105,25 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
             />
           </form>
         ))}
+        {isCardKind &&
+          (request.status === "done" ? (
+            <StatusPill label="✓ נוקב" variant="active" />
+          ) : (
+            <form action={punchRequest}>
+              <input type="hidden" name="id" value={request.id} />
+              <StatusPill label="נוקב" variant="active" submit />
+            </form>
+          ))}
       </div>
 
-      {isCardKind && (
-        <div style={{ marginTop: 20 }}>
-          {request.status === "done" ? (
-            <div
-              style={{
-                textAlign: "center",
-                background: "var(--panel-border)",
-                color: "var(--text-75)",
-                borderRadius: 12,
-                padding: 12,
-                font: "600 13px var(--sans)",
-              }}
-            >
-              ✓ נוקב — הכרטיסייה עודכנה
-            </div>
-          ) : (
-            <>
-              <div style={{ font: "12px var(--sans)", color: "var(--text-65)", marginBottom: 10 }}>
-                {CARD_NOTE[request.kind]}
-              </div>
-              <form action={punchRequest}>
-                <input type="hidden" name="id" value={request.id} />
-                <CompactSubmitButton>נוקב</CompactSubmitButton>
-              </form>
-            </>
-          )}
+      {isCardKind && card && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ font: "12px var(--sans)", color: "var(--text-65)", marginBottom: 4 }}>
+            {request.status === "done" ? "הכרטיסייה עודכנה" : CARD_NOTE[request.kind]}
+          </div>
+          <div style={{ font: "600 13px var(--sans)", color: "var(--accent)" }}>
+            {card.used} מתוך {card.total} ניקובים
+          </div>
         </div>
       )}
     </ScreenBody>

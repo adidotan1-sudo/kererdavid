@@ -6,6 +6,8 @@ import { SearchBox } from "@/components/SearchBox";
 import { PunchDots } from "@/components/PunchDots";
 import { StatusPill } from "@/components/StatusPill";
 
+export const dynamic = "force-dynamic";
+
 export default async function CardsPage({
   searchParams,
 }: {

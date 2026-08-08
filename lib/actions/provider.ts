@@ -61,11 +61,16 @@ export async function punchRequest(formData: FormData) {
     }
   }
 
-  if (appt.kind === "card_treatment" && appt.serviceTitle) {
+  const historyService =
+    appt.kind === "card_new" ? "פתיחת כרטיסייה" :
+    appt.kind === "card_renewal" ? "חידוש כרטיסייה" :
+    appt.serviceTitle;
+
+  if (historyService) {
     await db.historyEntry.create({
       data: {
         clientId: appt.clientId,
-        service: appt.serviceTitle,
+        service: historyService,
         date: appt.requestedDate ? new Date(appt.requestedDate) : new Date(),
       },
     });
@@ -83,6 +88,18 @@ export async function adjustCardUsed(formData: FormData) {
 
   const used = Math.max(0, Math.min(card.total, card.used + delta));
   await db.punchCard.update({ where: { clientId }, data: { used } });
+
+  // Keep the dated history in sync with the punch count no matter which
+  // path changed it, so the number of dated entries always matches `used`.
+  if (used > card.used) {
+    await db.historyEntry.create({
+      data: { clientId, service: "עדכון ניקוב ידני", date: new Date() },
+    });
+  } else if (used < card.used) {
+    const last = await db.historyEntry.findFirst({ where: { clientId }, orderBy: { date: "desc" } });
+    if (last) await db.historyEntry.delete({ where: { id: last.id } });
+  }
+
   redirect(`/david/clients/${clientId}`);
 }
 
